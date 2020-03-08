@@ -9,6 +9,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.MonthDay;
+import java.time.Year;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -21,6 +27,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpinnerDateModel;
+
+import org.h2.value.Value;
 
 public class MyFrame extends JFrame{
 	
@@ -52,10 +60,12 @@ public class MyFrame extends JFrame{
 	JButton delButtonOrders = new JButton("Delete");
 	JButton editButtonOrders = new JButton("Edit");
 	
+	JLabel namelabelorder = new JLabel("Project name:");
 	JLabel lnameLabelCustomerOrders = new JLabel("Customer:");
 	JLabel lnameLabelEmployeeOrders = new JLabel("Employee:");
 	JLabel startdatelabel = new JLabel("Start date:");
 	JLabel enddatelabel = new JLabel("End date:");
+	JTextField nameTFieldorder = new JTextField();
 	JTextField lnameTFieldCustomerOrders = new JTextField();
 	JTextField lnameTFieldEmployeeOrders = new JTextField();
 	SpinnerDateModel startdatemodel = new SpinnerDateModel();
@@ -116,25 +126,29 @@ public class MyFrame extends JFrame{
 		
 		//upPanel
 				upPanelOrders.setLayout(new GridLayout(5,2));
+				upPanelOrders.add(namelabelorder);
+				upPanelOrders.add(nameTFieldorder);
 				upPanelOrders.add(lnameLabelCustomerOrders);
-				upPanelOrders.add(lnameTFieldCustomerOrders);
+				upPanelOrders.add(CustomersOrders);
 				upPanelOrders.add(lnameLabelEmployeeOrders);
-				upPanelOrders.add(lnameTFieldEmployeeOrders);
+				upPanelOrders.add(EmployeeOrders);
 				upPanelOrders.add(startdatelabel);
 				upPanelOrders.add(startdate);
 				upPanelOrders.add(enddatelabel);
 				upPanelOrders.add(enddate);
+				CombofillerCustomers();
+				CombofillerEmployees();
 				//midPanel
 				midPanelOrders.add(addButtonOrders);
 				midPanelOrders.add(delButtonOrders);
 				midPanelOrders.add(editButtonOrders);
-				addButtonEmployees.addActionListener(new AddActionOrders());
-//				delButtonEmployees.addActionListener(new DeleteActionOrders());
-//				editButtonEmployees.addActionListener(new EditActionOrders());
+				addButtonOrders.addActionListener(new AddActionOrders());
+				delButtonOrders.addActionListener(new DeleteActionOrders());
+				editButtonOrders.addActionListener(new EditActionOrders());
 				//downPanel
-				scroller3.setPreferredSize(new Dimension(500,200));
+				scroller3.setPreferredSize(new Dimension(700,200));
 				downPanelOrders.add(scroller3);
-				refreshTableEmployees("orders");
+				refreshTableOrders("orders");
 			    Orderstable.addMouseListener(new MouseAction3());
 				OrdersPanel.add(upPanelOrders);
 				OrdersPanel.add(midPanelOrders);
@@ -167,7 +181,7 @@ public class MyFrame extends JFrame{
 				delButtonEmployees.addActionListener(new DeleteActionEmployees());
 				editButtonEmployees.addActionListener(new EditActionEmployees());
 				//downPanel
-				scroller2.setPreferredSize(new Dimension(500,200));
+				scroller2.setPreferredSize(new Dimension(700,200));
 				downPanelEmployees.add(scroller2);
 				refreshTableEmployees("employees");
 			    Employeestable.addMouseListener(new MouseAction2());
@@ -208,7 +222,7 @@ public class MyFrame extends JFrame{
 		editButtonCustomers.addActionListener(new EditActionCustomers());
 		searchButtonCustomers.addActionListener(new SearchCustomers());
 		//downPanel
-		scroller.setPreferredSize(new Dimension(500,200));
+		scroller.setPreferredSize(new Dimension(700,200));
 		downPanelCustomers.add(scroller);
 		refreshTableCustomers("customers");
 		Customerstable.addMouseListener(new MouseAction());
@@ -224,10 +238,30 @@ public class MyFrame extends JFrame{
 		
 	}//end constructor
 	
+	public void refreshSearch(String tableName1, String tableName2) {
+		conn = DBConnector.getConnection();
+		String sql = "select * from " + tableName1;
+//		String sql = "select lname, fname, email, phone from " + tableName;
+		
+		try {
+			state = conn.prepareStatement(sql);
+			result = state.executeQuery();
+			model = new MyModel(result);
+//			Employeestable.setModel(model);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	public void refreshTableOrders(String tableName) {
 		conn = DBConnector.getConnection();
 		String sql = "select * from " + tableName;
-		
+//		String sql = "select order_name , orderdate_start, orderdate_end, customer_lname, employee_lname from " + tableName;
+
 		try {
 			state = conn.prepareStatement(sql);
 			result = state.executeQuery();
@@ -246,6 +280,7 @@ public class MyFrame extends JFrame{
 	public void refreshTableCustomers(String tableName) {
 		conn = DBConnector.getConnection();
 		String sql = "select * from " + tableName;
+//		String sql = "select lname, fname, address, email, departments from " + tableName;
 		
 		try {
 			state = conn.prepareStatement(sql);
@@ -264,6 +299,7 @@ public class MyFrame extends JFrame{
 	public void refreshTableEmployees(String tableName) {
 		conn = DBConnector.getConnection();
 		String sql = "select * from " + tableName;
+//		String sql = "select lname, fname, email, phone from " + tableName;
 		
 		try {
 			state = conn.prepareStatement(sql);
@@ -279,6 +315,8 @@ public class MyFrame extends JFrame{
 		}
 	}
 	
+	
+	
 	class DeleteActionOrders implements ActionListener{
 
 		@Override
@@ -290,7 +328,7 @@ public class MyFrame extends JFrame{
 				state = conn.prepareStatement(sql);
 				state.setInt(1, id);
 				state.execute();
-				refreshTableCustomers("Orders");
+				refreshTableOrders("Orders");
 				id = -1;
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -312,6 +350,8 @@ public class MyFrame extends JFrame{
 				state.setInt(1, id);
 				state.execute();
 				refreshTableCustomers("Customers");
+				CustomersOrders.removeAllItems();
+				CombofillerCustomers();
 				id = -1;
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -333,6 +373,8 @@ public class MyFrame extends JFrame{
 				state.setInt(1, id);
 				state.execute();
 				refreshTableEmployees("Employees");
+				EmployeeOrders.removeAllItems();
+				CombofillerEmployees();
 				id = -1;
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -346,14 +388,14 @@ public class MyFrame extends JFrame{
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			int row = Employeestable.getSelectedRow();
-			id = Integer.parseInt(Employeestable.getValueAt(row, 0).toString());
+			int row = Orderstable.getSelectedRow();
+			id = Integer.parseInt(Orderstable.getValueAt(row, 0).toString());
 			if(e.getClickCount() > 1) {
-				lnameTFieldCustomerOrders.setText(Orderstable.getValueAt(row, 1).toString());
-				lnameTFieldEmployeeOrders.setText(Orderstable.getValueAt(row, 2).toString());
-				startdate.setToolTipText(Orderstable.getValueAt(row, 3).toString());
-				enddate.setToolTipText(Orderstable.getValueAt(row, 4).toString());
-
+				nameTFieldorder.setText(Orderstable.getValueAt(row, 1).toString());
+//				startdate.setValue(Orderstable.getValueAt(row, 2).toString());
+//				enddate.setValue(Orderstable.getValueAt(row, 3).toString());
+				CustomersOrders.setSelectedItem(Orderstable.getValueAt(row, 4).toString());
+				EmployeeOrders.setSelectedItem(Orderstable.getValueAt(row, 5).toString());
 			}
 		}
 
@@ -380,6 +422,7 @@ public class MyFrame extends JFrame{
 			// TODO Auto-generated method stub
 			
 		}
+
 		
 	}
 	class MouseAction2 implements MouseListener{
@@ -487,23 +530,25 @@ public class MyFrame extends JFrame{
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			String cname = lnameLabelCustomerOrders.getText();
-			String ename = lnameTFieldEmployeeOrders.getText();
-			String sdate = startdate.getToolTipText();
-			String edate = enddate.getToolTipText();
+			String pname = nameTFieldorder.getText();
+			String cname = CustomersOrders.getSelectedItem().toString();
+			String ename = EmployeeOrders.getSelectedItem().toString();
+			String sdate = startdate.getValue().toString();
+			String edate = enddate.getValue().toString();
 			
 			
 			conn = DBConnector.getConnection();
-			String query = "insert into orders values(null,?,?,?, ?);";
+			String query = "insert into orders (order_name, orderdate_start, orderdate_end, customer_lname, employee_lname) values(?,?,?,?,?);";
 			
 			try {
 				state = conn.prepareStatement(query);
-				state.setString(1, cname);
-				state.setString(2, ename);
-				state.setString(3, sdate);
-				state.setString(4, edate);
+				state.setString(1, pname);
+				state.setString(2, sdate);
+				state.setString(3, edate);
+				state.setString(4, cname);
+				state.setString(5, ename);
 				state.execute();
-				refreshTableEmployees("Orders");
+				refreshTableOrders("Orders");
 				clearFormEmployees();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -534,6 +579,8 @@ public class MyFrame extends JFrame{
 				state.setString(3, email);
 				state.setString(4, phone);
 				state.execute();
+				EmployeeOrders.removeAllItems();
+				CombofillerEmployees();
 				refreshTableEmployees("Employees");
 				clearFormEmployees();
 			} catch (SQLException e1) {
@@ -586,6 +633,8 @@ public class MyFrame extends JFrame{
 				state.setString(5, departments);
 				state.execute();
 				refreshTableCustomers("Customers");
+				CustomersOrders.removeAllItems();
+				CombofillerCustomers();
 				clearFormCustomers();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -662,6 +711,77 @@ public class MyFrame extends JFrame{
 		
 	}
 	
+	class EditActionOrders implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String pname = nameTFieldorder.getText();
+			String cname = lnameLabelCustomerOrders.getText();
+			String ename = lnameLabelEmployeeOrders.getText();
+			String dstart = startdate.getValue().toString();
+			String dend = enddate.getValue().toString();
+			
+			
+			conn = DBConnector.getConnection();
+			String query = "update Orders set order_name=?,orderdate_start=?,orderdate_end=?,customer_lname=?,employee_lname where order_id = ?;";
+			
+			try {
+				state = conn.prepareStatement(query);
+				state.setString(1, pname);
+				state.setString(2, dstart);
+				state.setString(3, dend);
+				state.setString(4, cname);
+				state.setString(5, ename);
+				state.setInt(6, id);
+				state.execute();
+				refreshTableOrders("Orders");
+//				clearForm();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+		}//end method
+		
+	}
+	
+	public void CombofillerCustomers() {
+		try {
+			conn = DBConnector.getConnection();
+			String sql = "select * from customers;";
+			PreparedStatement state = conn.prepareStatement(sql);
+			ResultSet rs = state.executeQuery();
+			while(rs.next()) {
+				String name = rs.getString("lname");
+				CustomersOrders.addItem(name);
+			}
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	public void CombofillerEmployees() {
+		try {
+			conn = DBConnector.getConnection();
+			String sql = "select * from Employees;";
+			PreparedStatement state = conn.prepareStatement(sql);
+			ResultSet rs = state.executeQuery();
+			while(rs.next()) {
+				String name = rs.getString("lname");
+				EmployeeOrders.addItem(name);
+			}
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	public void clearFormOrders() {
+		nameTFieldorder.setText("");
+		lnameTFieldCustomers.setText("");
+		adressTFieldCustomers.setText("");
+		emailTFieldCustomers.setText("");
+	}
+	
 	public void clearFormCustomers() {
 		fnameTFieldCustomers.setText("");
 		lnameTFieldCustomers.setText("");
@@ -676,6 +796,7 @@ public class MyFrame extends JFrame{
 		phoneTFieldEmployees.setText("");
 		
 	}
+	
 	
 	
 	public class SearchCustomers implements ActionListener {
