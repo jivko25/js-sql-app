@@ -37,19 +37,36 @@ public class MyFrame extends JFrame{
 	ResultSet result = null;
 	MyModel model = null;
 	int id = -1; //selected id
+	String lname;
 	
 	JTabbedPane tab1JTabbedPane  = new JTabbedPane();
 	
 	JTable Customerstable = new JTable();
 	JTable Employeestable = new JTable();
 	JTable Orderstable = new JTable();
+	JTable SearchTable = new JTable();
 	JScrollPane scroller3 = new JScrollPane(Orderstable);
 	JScrollPane scroller = new JScrollPane(Customerstable);
 	JScrollPane scroller2 = new JScrollPane(Employeestable);
+	JScrollPane scroller4 = new JScrollPane(SearchTable);
 
 	JPanel CustomersPanel = new JPanel();
     JPanel EmployeePanel = new JPanel();
     JPanel OrdersPanel = new JPanel();
+    JPanel SearchPanel = new JPanel();
+    
+    //Search
+    JPanel upPanelSearch = new JPanel();
+    JPanel midPanelSearch = new JPanel();
+    JPanel downPanelSearch = new JPanel();
+    
+    JLabel ProjectNameSearchLabel = new JLabel("Project name:");
+    JLabel EmployeeNameSearchLabel = new JLabel("Customer first name:");
+    
+    JTextField ProjectNameSearchTF = new JTextField();
+    JTextField EmployeeNameSearchTF = new JTextField();
+    
+    JButton SearchButton = new JButton("Search");
     
     //Orders
     JPanel upPanelOrders = new JPanel();
@@ -59,10 +76,11 @@ public class MyFrame extends JFrame{
 	JButton addButtonOrders = new JButton("Add");
 	JButton delButtonOrders = new JButton("Delete");
 	JButton editButtonOrders = new JButton("Edit");
+	JButton searchButtonOrders = new JButton("Search");
 	
 	JLabel namelabelorder = new JLabel("Project name:");
-	JLabel lnameLabelCustomerOrders = new JLabel("Customer:");
-	JLabel lnameLabelEmployeeOrders = new JLabel("Employee:");
+	JLabel lnameLabelCustomerOrders = new JLabel("Employee:");
+	JLabel lnameLabelEmployeeOrders = new JLabel("Customer:");
 	JLabel startdatelabel = new JLabel("Start date:");
 	JLabel enddatelabel = new JLabel("End date:");
 	JTextField nameTFieldorder = new JTextField();
@@ -83,6 +101,7 @@ public class MyFrame extends JFrame{
 	JButton addButtonEmployees = new JButton("Add");
 	JButton delButtonEmployees = new JButton("Delete");
 	JButton editButtonEmployees = new JButton("Edit");
+	JButton searchButtonEmployees = new JButton("Search");
 	
 	JLabel fnameLabelEmployees = new JLabel("First Name:");
 	JLabel lnameLabelEmployees = new JLabel("Last Name:");
@@ -117,6 +136,25 @@ public class MyFrame extends JFrame{
 	JComboBox<String> DepartmentCombo = new JComboBox<>(departments);
 	
 	public MyFrame() {
+		//Search
+		SearchPanel.setLayout(new GridLayout(5,2));
+		SearchPanel.add(upPanelSearch);
+		SearchPanel.add(midPanelSearch);
+		SearchPanel.add(downPanelSearch);
+		
+		upPanelSearch.setLayout(new GridLayout(5,2));
+		upPanelSearch.add(ProjectNameSearchLabel);
+		upPanelSearch.add(ProjectNameSearchTF);
+		upPanelSearch.add(EmployeeNameSearchLabel);
+		upPanelSearch.add(EmployeeNameSearchTF);
+		
+		midPanelSearch.add(SearchButton);
+		SearchButton.addActionListener(new SearchAction());
+		
+		scroller4.setPreferredSize(new Dimension(700,200));
+		downPanelSearch.add(scroller4);
+		refreshSearch("orders", "employees");
+		
 		//Orders
 		
 		OrdersPanel.setLayout(new GridLayout(3,1));
@@ -142,9 +180,11 @@ public class MyFrame extends JFrame{
 				midPanelOrders.add(addButtonOrders);
 				midPanelOrders.add(delButtonOrders);
 				midPanelOrders.add(editButtonOrders);
+				midPanelOrders.add(searchButtonOrders);
 				addButtonOrders.addActionListener(new AddActionOrders());
 				delButtonOrders.addActionListener(new DeleteActionOrders());
 				editButtonOrders.addActionListener(new EditActionOrders());
+				searchButtonOrders.addActionListener(new SearchOrders());
 				//downPanel
 				scroller3.setPreferredSize(new Dimension(700,200));
 				downPanelOrders.add(scroller3);
@@ -177,9 +217,11 @@ public class MyFrame extends JFrame{
 				midPanelEmployees.add(addButtonEmployees);
 				midPanelEmployees.add(delButtonEmployees);
 				midPanelEmployees.add(editButtonEmployees);
+				midPanelEmployees.add(searchButtonEmployees);
 				addButtonEmployees.addActionListener(new AddActionEmployees());
 				delButtonEmployees.addActionListener(new DeleteActionEmployees());
 				editButtonEmployees.addActionListener(new EditActionEmployees());
+				searchButtonEmployees.addActionListener(new SearchEmployees());
 				//downPanel
 				scroller2.setPreferredSize(new Dimension(700,200));
 				downPanelEmployees.add(scroller2);
@@ -230,9 +272,10 @@ public class MyFrame extends JFrame{
 		CustomersPanel.add(midPanelCustomers);
 		CustomersPanel.add(downPanelCustomers);
 		
-		tab1JTabbedPane.add("Customers", CustomersPanel);
-		tab1JTabbedPane.add("Employees", EmployeePanel);
+		tab1JTabbedPane.add("Employees", CustomersPanel);
+		tab1JTabbedPane.add("Customers", EmployeePanel);
 		tab1JTabbedPane.add("Orders", OrdersPanel);
+		tab1JTabbedPane.add("Search", SearchPanel);
 		
 		add(tab1JTabbedPane);
 		
@@ -240,14 +283,23 @@ public class MyFrame extends JFrame{
 	
 	public void refreshSearch(String tableName1, String tableName2) {
 		conn = DBConnector.getConnection();
-		String sql = "select * from " + tableName1;
-//		String sql = "select lname, fname, email, phone from " + tableName;
+		String ProjectName = ProjectNameSearchTF.getText().toString();
+		String EmployeeFName = EmployeeNameSearchTF.getText().toString();
+//		String sql =
+//		"Select orDER_NAME , oRDERDATE_END , eMPLOYEE_LNAME , phONE , emAIL from " + tableName1 +
+//		" inner join employees on " + tableName1 + ".Employee_lname = " + tableName2 + ".lname and "
+//		 + tableName1 + ".order_name = ? and " + tableName2 + ".fname = ?;";
+		
+		String sql =
+				"Select orDER_NAME, oRDERDATE_END, eMPLOYEE_LNAME, phONE , emAIL from Orders inner join employees on Orders.Employee_lname = Employees.lname and Orders.order_name = ? and Employees.fname = ?";
 		
 		try {
 			state = conn.prepareStatement(sql);
+			state.setString(1, ProjectName);
+			state.setString(2, EmployeeFName);
 			result = state.executeQuery();
 			model = new MyModel(result);
-//			Employeestable.setModel(model);
+			SearchTable.setModel(model);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -315,7 +367,15 @@ public class MyFrame extends JFrame{
 		}
 	}
 	
-	
+	class SearchAction  implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			refreshSearch("Orders", "Employees");
+			
+		}
+		
+	}
 	
 	class DeleteActionOrders implements ActionListener{
 
@@ -323,7 +383,7 @@ public class MyFrame extends JFrame{
 		public void actionPerformed(ActionEvent e) {
 			
 			conn = DBConnector.getConnection();
-			String sql = "delete from Orders where order_id=?";
+			String sql = "delete from Orders where order_id=? ;";
 			try {
 				state = conn.prepareStatement(sql);
 				state.setInt(1, id);
@@ -344,12 +404,15 @@ public class MyFrame extends JFrame{
 		public void actionPerformed(ActionEvent e) {
 			
 			conn = DBConnector.getConnection();
-			String sql = "delete from Customers where customer_id=?";
+			String sql = "delete from Customers where customer_id=?;"
+					+ "update orders set customer_lname='' where customer_lname = ?;";
 			try {
 				state = conn.prepareStatement(sql);
 				state.setInt(1, id);
+				state.setString(2, lname);
 				state.execute();
 				refreshTableCustomers("Customers");
+				refreshTableOrders("Orders");
 				CustomersOrders.removeAllItems();
 				CombofillerCustomers();
 				id = -1;
@@ -367,12 +430,15 @@ public class MyFrame extends JFrame{
 		public void actionPerformed(ActionEvent e) {
 			
 			conn = DBConnector.getConnection();
-			String sql = "delete from Employees where employee_id=?";
+			String sql = "delete from Employees where employee_id=? ;"
+					+ "delete from Orders where employee_lname=? ;";
 			try {
 				state = conn.prepareStatement(sql);
 				state.setInt(1, id);
+				state.setString(2, lname);
 				state.execute();
 				refreshTableEmployees("Employees");
+				refreshTableOrders("Orders");
 				EmployeeOrders.removeAllItems();
 				CombofillerEmployees();
 				id = -1;
@@ -431,6 +497,7 @@ public class MyFrame extends JFrame{
 		public void mouseClicked(MouseEvent e) {
 				int row = Employeestable.getSelectedRow();
 				id = Integer.parseInt(Employeestable.getValueAt(row, 0).toString());
+				lname = String.valueOf(Employeestable.getValueAt(row, 2).toString());
 				if(e.getClickCount() > 1) {
 					fnameTFieldEmployees.setText(Employeestable.getValueAt(row, 1).toString());
 					lnameTFieldEmployees.setText(Employeestable.getValueAt(row, 2).toString());
@@ -472,6 +539,7 @@ public class MyFrame extends JFrame{
 		public void mouseClicked(MouseEvent e) {
 			int row = Customerstable.getSelectedRow();
 			id = Integer.parseInt(Customerstable.getValueAt(row, 0).toString());
+			lname = String.valueOf(Customerstable.getValueAt(row, 2).toString());
 			if(e.getClickCount() > 1) {
 				fnameTFieldCustomers.setText(Customerstable.getValueAt(row, 1).toString());
 				lnameTFieldCustomers.setText(Customerstable.getValueAt(row, 2).toString());
@@ -650,25 +718,31 @@ public class MyFrame extends JFrame{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			String fname = fnameTFieldCustomers.getText();
-			String lname = lnameTFieldCustomers.getText();
+			String Lname = lnameTFieldCustomers.getText();
 			String address = adressTFieldCustomers.getText();
 			String email = emailTFieldCustomers.getText();
 			String departments = DepartmentCombo.getSelectedItem().toString();
 			
 			
 			conn = DBConnector.getConnection();
-			String query = "update customers set fname=?,lname=?,address=?,email=?,departments=? where customer_id = ?;";
+			String query = "update customers set fname=?,lname=?,address=?,email=?,departments=? where customer_id = ?;"
+					+ "update orders set customer_lname=? where customer_lname = ?;";
 			
 			try {
 				state = conn.prepareStatement(query);
 				state.setString(1, fname);
-				state.setString(2, lname);
+				state.setString(2, Lname);
 				state.setString(3, address);
 				state.setString(4, email);
 				state.setString(5, departments);
 				state.setInt(6, id);
+				state.setString(7,Lname);
+				state.setString(8, lname);
 				state.execute();
 				refreshTableCustomers("Customers");
+				refreshTableOrders("Orders");
+				CustomersOrders.removeAllItems();
+				CombofillerCustomers();
 				clearFormCustomers();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -684,23 +758,29 @@ public class MyFrame extends JFrame{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			String fname = fnameTFieldEmployees.getText();
-			String lname = lnameTFieldEmployees.getText();
+			String Lname = lnameTFieldEmployees.getText();
 			String email = emailTFieldEmployees.getText();
 			String phone = phoneTFieldEmployees.getText();
 			
 			
 			conn = DBConnector.getConnection();
-			String query = "update employees set fname=?,lname=?,email=?,phone=? where employee_id = ?;";
+			String query = "update employees set fname=?,lname=?,email=?,phone=? where employee_id = ?;"
+					+ "update orders set employee_lname=? where employee_lname = ?;";
 			
 			try {
 				state = conn.prepareStatement(query);
 				state.setString(1, fname);
-				state.setString(2, lname);
-				state.setString(3, email);
-				state.setString(4, phone);
+				state.setString(2, Lname);
+				state.setString(3, phone);
+				state.setString(4, email);
 				state.setInt(5, id);
+				state.setString(6, Lname);
+				state.setString(7, lname);
 				state.execute();
 				refreshTableEmployees("Employees");
+				refreshTableOrders("Orders");
+				EmployeeOrders.removeAllItems();
+				CombofillerEmployees();
 				clearFormEmployees();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -716,14 +796,14 @@ public class MyFrame extends JFrame{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			String pname = nameTFieldorder.getText();
-			String cname = lnameLabelCustomerOrders.getText();
-			String ename = lnameLabelEmployeeOrders.getText();
+			String cname = CustomersOrders.getSelectedItem().toString();
+			String ename = EmployeeOrders.getSelectedItem().toString();
 			String dstart = startdate.getValue().toString();
 			String dend = enddate.getValue().toString();
 			
 			
 			conn = DBConnector.getConnection();
-			String query = "update Orders set order_name=?,orderdate_start=?,orderdate_end=?,customer_lname=?,employee_lname where order_id = ?;";
+			String query = "update Orders set order_name=?,orderdate_start=?,orderdate_end=?,customer_lname=?,employee_lname=? where order_id = ?;";
 			
 			try {
 				state = conn.prepareStatement(query);
@@ -735,6 +815,7 @@ public class MyFrame extends JFrame{
 				state.setInt(6, id);
 				state.execute();
 				refreshTableOrders("Orders");
+				clearFormOrders();
 //				clearForm();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -836,6 +917,85 @@ public class MyFrame extends JFrame{
 			}
 		}
 	}
+	
+	public class SearchOrders implements ActionListener {
+		public ResultSet search(String a) {
+			conn = DBConnector.getConnection();
+			ResultSet rs = null;
+			PreparedStatement state = null;
+			try {
+			state = conn.prepareStatement("select * from orders where order_name = ?");
+			state.setString(1, a);
+			rs = state.executeQuery();
+			}
+			catch (Exception e) {
+				// TODO: handle exception
+			}
+			return rs;
+		}
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			SearchOrders SearchResult = new SearchOrders();
+			ResultSet rs = null;
+			String pname = "order_name";
+			String ostart = "orderdate_start";
+			String oend = "orderdate_end";
+			String clname = "customer_lname";
+			String elname = "employee_lname";
+			
+			rs = SearchResult.search(nameTFieldorder.getText());
+			try {
+				if(rs.next()) {
+//					nameTFieldorder.setText(rs.getString("order_name"));
+					startdate.setValue(rs.getString("orderdate_start"));
+					enddate.setValue(rs.getString("orderdate_end"));
+					CustomersOrders.setSelectedItem(rs.getString("customer_lname"));
+					EmployeeOrders.setSelectedItem(rs.getString("employee_lname"));
+				}
+			}
+				catch (Exception e2) {
+					// TODO: handle exception
+				}
+			}
+		}
+	
+	public class SearchEmployees implements ActionListener {
+		public ResultSet search(String a) {
+			conn = DBConnector.getConnection();
+			ResultSet rs = null;
+			PreparedStatement state = null;
+			try {
+			state = conn.prepareStatement("select * from employees where fname = ?");
+			state.setString(1, a);
+			rs = state.executeQuery();
+			}
+			catch (Exception e) {
+				// TODO: handle exception
+			}
+			return rs;
+		}
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			SearchEmployees SearchResult = new SearchEmployees();
+			ResultSet rs = null;
+			String fn = "fname";
+			String ln = "lname";
+			String email = "email";
+			String phone = "phone";
+			
+			rs = SearchResult.search(fnameTFieldEmployees.getText());
+			try {
+				if(rs.next()) {
+					lnameTFieldEmployees.setText(rs.getString("lname"));
+					emailTFieldEmployees.setText(rs.getString("email"));
+					phoneTFieldEmployees.setText(rs.getString("phone"));
+				}
+			}
+				catch (Exception e2) {
+					// TODO: handle exception
+				}
+			}
+		}
 }	
 
 
