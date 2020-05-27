@@ -389,6 +389,7 @@ public class MyFrame extends JFrame{
 				state.setInt(1, id);
 				state.execute();
 				refreshTableOrders("Orders");
+				clearFormOrders();
 				id = -1;
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -415,6 +416,7 @@ public class MyFrame extends JFrame{
 				refreshTableOrders("Orders");
 				CustomersOrders.removeAllItems();
 				CombofillerCustomers();
+				clearFormCustomers();
 				id = -1;
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -441,6 +443,7 @@ public class MyFrame extends JFrame{
 				refreshTableOrders("Orders");
 				EmployeeOrders.removeAllItems();
 				CombofillerEmployees();
+				clearFormEmployees();
 				id = -1;
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -997,5 +1000,3 @@ public class MyFrame extends JFrame{
 			}
 		}
 }	
-
-
