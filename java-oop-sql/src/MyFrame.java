@@ -45,15 +45,18 @@ public class MyFrame extends JFrame{
 	JTable Employeestable = new JTable();
 	JTable Orderstable = new JTable();
 	JTable SearchTable = new JTable();
+	JTable SearchTable2 = new JTable();
 	JScrollPane scroller3 = new JScrollPane(Orderstable);
 	JScrollPane scroller = new JScrollPane(Customerstable);
 	JScrollPane scroller2 = new JScrollPane(Employeestable);
 	JScrollPane scroller4 = new JScrollPane(SearchTable);
+	JScrollPane scroller5 = new JScrollPane(SearchTable2);
 
 	JPanel CustomersPanel = new JPanel();
     JPanel EmployeePanel = new JPanel();
     JPanel OrdersPanel = new JPanel();
     JPanel SearchPanel = new JPanel();
+    JPanel SearchPanel2 = new JPanel();
     
     //Search
     JPanel upPanelSearch = new JPanel();
@@ -67,6 +70,19 @@ public class MyFrame extends JFrame{
     JTextField EmployeeNameSearchTF = new JTextField();
     
     JButton SearchButton = new JButton("Search");
+    
+  //Search2
+    JPanel upPanelSearch2 = new JPanel();
+    JPanel midPanelSearch2 = new JPanel();
+    JPanel downPanelSearch2 = new JPanel();
+    
+    JLabel ProjectNameSearchLabel2 = new JLabel("Project name:");
+    JLabel EmployeeNameSearchLabel2 = new JLabel("Customer email:");
+    
+    JTextField ProjectNameSearchTF2 = new JTextField();
+    JTextField EmployeeNameSearchTF2 = new JTextField();
+    
+    JButton SearchButton2 = new JButton("Search");
     
     //Orders
     JPanel upPanelOrders = new JPanel();
@@ -101,7 +117,7 @@ public class MyFrame extends JFrame{
 	JButton addButtonEmployees = new JButton("Add");
 	JButton delButtonEmployees = new JButton("Delete");
 	JButton editButtonEmployees = new JButton("Edit");
-	JButton searchButtonEmployees = new JButton("Search");
+	JButton searchButtonEmployees = new JButton("Search by name");
 	
 	JLabel fnameLabelEmployees = new JLabel("First Name:");
 	JLabel lnameLabelEmployees = new JLabel("Last Name:");
@@ -121,7 +137,7 @@ public class MyFrame extends JFrame{
 	JButton addButtonCustomers = new JButton("Add");
 	JButton delButtonCustomers = new JButton("Delete");
 	JButton editButtonCustomers = new JButton("Edit");
-	JButton searchButtonCustomers = new JButton("Search");
+	JButton searchButtonCustomers = new JButton("Search by name");
 	
 	JLabel fnameLabelCustomers = new JLabel("First Name:");
 	JLabel lnameLabelCustomers = new JLabel("Last Name:");
@@ -155,6 +171,26 @@ public class MyFrame extends JFrame{
 		downPanelSearch.add(scroller4);
 		refreshSearch("orders", "employees");
 		
+		
+		//Search2
+				SearchPanel2.setLayout(new GridLayout(5,2));
+				SearchPanel2.add(upPanelSearch2);
+				SearchPanel2.add(midPanelSearch2);
+				SearchPanel2.add(downPanelSearch2);
+				
+				upPanelSearch2.setLayout(new GridLayout(5,2));
+				upPanelSearch2.add(ProjectNameSearchLabel2);
+				upPanelSearch2.add(ProjectNameSearchTF2);
+				upPanelSearch2.add(EmployeeNameSearchLabel2);
+				upPanelSearch2.add(EmployeeNameSearchTF2);
+				
+				midPanelSearch2.add(SearchButton2);
+				SearchButton2.addActionListener(new SearchAction2());
+				
+				scroller5.setPreferredSize(new Dimension(700,200));
+				downPanelSearch2.add(scroller5);
+				refreshSearch2("orders", "employees");
+				
 		//Orders
 		
 		OrdersPanel.setLayout(new GridLayout(3,1));
@@ -274,8 +310,9 @@ public class MyFrame extends JFrame{
 		
 		tab1JTabbedPane.add("Employees", CustomersPanel);
 		tab1JTabbedPane.add("Customers", EmployeePanel);
-		tab1JTabbedPane.add("Orders", OrdersPanel);
+		tab1JTabbedPane.add("Projects", OrdersPanel);
 		tab1JTabbedPane.add("Search", SearchPanel);
+		tab1JTabbedPane.add("Search2", SearchPanel2);
 		
 		add(tab1JTabbedPane);
 		
@@ -300,6 +337,34 @@ public class MyFrame extends JFrame{
 			result = state.executeQuery();
 			model = new MyModel(result);
 			SearchTable.setModel(model);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void refreshSearch2(String tableName1, String tableName2) {
+		conn = DBConnector.getConnection();
+		String ProjectName = ProjectNameSearchTF2.getText().toString();
+		String EmployeeFName = EmployeeNameSearchTF2.getText().toString();
+//		String sql =
+//		"Select orDER_NAME , oRDERDATE_END , eMPLOYEE_LNAME , phONE , emAIL from " + tableName1 +
+//		" inner join employees on " + tableName1 + ".Employee_lname = " + tableName2 + ".lname and "
+//		 + tableName1 + ".order_name = ? and " + tableName2 + ".fname = ?;";
+		
+		String sql =
+				"Select orDER_NAME, oRDERDATE_END, eMPLOYEE_LNAME, phONE , emAIL from Orders inner join employees on Orders.Employee_lname = Employees.lname and Orders.order_name = ? and Employees.email = ?";
+		
+		try {
+			state = conn.prepareStatement(sql);
+			state.setString(1, ProjectName);
+			state.setString(2, EmployeeFName);
+			result = state.executeQuery();
+			model = new MyModel(result);
+			SearchTable2.setModel(model);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -372,6 +437,16 @@ public class MyFrame extends JFrame{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			refreshSearch("Orders", "Employees");
+			
+		}
+		
+	}
+	
+	class SearchAction2  implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			refreshSearch2("Orders", "Employees");
 			
 		}
 		
@@ -620,7 +695,7 @@ public class MyFrame extends JFrame{
 				state.setString(5, ename);
 				state.execute();
 				refreshTableOrders("Orders");
-				clearFormEmployees();
+				clearFormOrders();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -1000,3 +1075,5 @@ public class MyFrame extends JFrame{
 			}
 		}
 }	
+
+
